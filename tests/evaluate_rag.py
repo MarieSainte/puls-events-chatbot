@@ -21,7 +21,7 @@ evaluator_embeddings = HuggingFaceEndpointEmbeddings(
 
 SEUIL_PRECISION = 0.8
 
-# Données de test (Idéalement, charge un fichier JSON de test ici)
+# Données de test 
 df = pd.DataFrame({
     'question': ["Quels sont les événements à Paris ?"],
     'contexts': [["Le festival Jazz à Paris a lieu en juillet.", "L'exposition Louvre est ouverte."]],

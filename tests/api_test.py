@@ -26,7 +26,6 @@ def mock_events_df():
 
 def test_clean_data(mock_events_df):
     from puls_events_chatbot.services.fetch_data import clean_data
-    # On ajoute des doublons pour tester le nettoyage
     df_with_doubles = pd.concat([mock_events_df, mock_events_df])
     cleaned_df = clean_data(df_with_doubles)
     assert len(cleaned_df) == 1
@@ -34,7 +33,6 @@ def test_clean_data(mock_events_df):
 @patch("puls_events_chatbot.services.chatbot.requests.get")
 def test_fetch_evenements_publics(mock_get):
     from puls_events_chatbot.services.fetch_data import fetch_evenements_publics
-    # Simulation d'une réponse API réussie
     mock_get.return_value.status_code = 200
     mock_get.return_value.json.return_value = {"results": [{"Titre": "Test"}]}
     
@@ -42,7 +40,7 @@ def test_fetch_evenements_publics(mock_get):
     assert isinstance(df, pd.DataFrame)
     assert not df.empty
 
-# --- TESTS DU CHATBOT (LOGIQUE RAG) ---
+# --- TESTS DU CHATBOT ---
 
 @patch("puls_events_chatbot.services.chatbot.embedding_class.embed_documents")
 def test_vector_store_initialization(mock_embed, mock_events_df):
@@ -68,10 +66,9 @@ def test_get_status():
 
 @patch("puls_events_chatbot.services.chatbot.chat_with_mistral")
 def test_chatbot_ask_endpoint(mock_chat):
-    # On simule une réponse de Mistral
+    
     mock_chat.return_value = "Voici un événement en Martinique"
     
-    # On force le statut à actif pour le test
     with patch("puls_events_chatbot.services.chatbot.get_backend_status", return_value="actif"):
         response = client.post(
             "/chatbot/ask",
