@@ -1,0 +1,1 @@
+docker run --name puls-chatbot -p 8010:8010 -p 7860:7860 --env-file .env -d puls_events_chatbot
