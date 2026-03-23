@@ -1,0 +1,9 @@
+.venv/
+.git/
+.env
+.github/
+.gradio/
+__pycache__/
+*.pyc
+*.pyo
+tests/

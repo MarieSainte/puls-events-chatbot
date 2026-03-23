@@ -1,22 +1,25 @@
-FROM python:3.10-slim AS builder
+# Utiliser une image Python légère
+FROM python:3.10-slim
 
-# Définir un répertoire de travail
+# Définir le répertoire de travail
 WORKDIR /app
 
-# Installer Poetry
-RUN pip install --no-cache-dir poetry==1.8.3
+# Copier d'abord le fichier des dépendances pour profiter du cache Docker
+COPY requirements.txt .
 
-# Copier config Poetry
-COPY pyproject.toml poetry.lock* ./
+# Installer les dépendances
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Installer dépendances sans installer le projet en mode package
-RUN poetry install --no-root
-
-# Copier le code
+# Copier tout le reste du code dans le conteneur
 COPY . .
 
-# Exposer le port 
-EXPOSE 8010:8010
+# Informer Docker que l'app écoute sur le port 8010
+EXPOSE 8010
+EXPOSE 7860
 
-# Lancer le serveur
-CMD ["poetry", "run", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8010"]
+# Configuration du PYTHONPATH pour que Python trouve le module src/puls_events_chatbot
+ENV PYTHONPATH=/app/src
+
+# Lancer le serveur avec Uvicorn
+CMD ["uvicorn", "src.puls_events_chatbot.main:app", "--host", "0.0.0.0", "--port", "8010"]
