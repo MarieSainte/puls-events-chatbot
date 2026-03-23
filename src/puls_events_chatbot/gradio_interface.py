@@ -1,7 +1,8 @@
 import gradio as gr
 import requests
+import os
 
-API_BASE = "http://127.0.0.1:5050/chatbot"  
+API_BASE = os.getenv("API_BASE")
 
 def chat(message,*_):
     """
@@ -14,9 +15,11 @@ def chat(message,*_):
         # Supposons que l'API retourne {'answer': "...", 'code': "..."}
         answer = data.get("answer", "Pas de réponse")
         code_snippet = data.get("code", "")
-        return answer, code_snippet
+        if code_snippet:
+            return f"{answer}\n\n```python\n{code_snippet}\n```"
+        return answer
     except Exception as e:
-        return f"Erreur lors de l'appel à l'API : {e}", ""
+        return f"Erreur lors de l'appel à l'API : {e}"
 
 def rebuild_api(username):
     """
