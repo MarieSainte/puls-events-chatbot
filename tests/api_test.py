@@ -47,7 +47,7 @@ def test_vector_store_initialization(mock_embed, mock_events_df):
     from puls_events_chatbot.services.chatbot import createdb, get_embeddings_by_chunks
     import puls_events_chatbot.services.chatbot as chatbot
     
-    # Mock des embeddings (vecteur de taille 384 par ex)
+    # Mock des embeddings
     chatbot.df = mock_events_df
     mock_embed.return_value = [np.random.rand(384).tolist()]
     
@@ -60,8 +60,8 @@ def test_vector_store_initialization(mock_embed, mock_events_df):
 # --- TESTS DES ENDPOINTS (API) ---
 
 def test_get_status():
-    response = client.get("/chatbot/ask") # Simulation d'un appel pour voir l'état
-    # Si le backend est à l'arrêt, il devrait initier le démarrage
+    response = client.get("/chatbot/ask") 
+    # Si le backend est à l'arrêt, il initie le démarrage
     assert response.status_code in [200, 405]
 
 @patch("puls_events_chatbot.services.chatbot.chat_with_mistral")
