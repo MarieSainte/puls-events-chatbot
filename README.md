@@ -11,26 +11,26 @@ Le diagramme UML ci-dessous illustre le flux de données et les interactions ent
 ```mermaid
 flowchart TD
     %% Acteurs
-    User([Utilisateur])
+    User(["Utilisateur"])
     
     %% Frontend
     subgraph "Frontend"
-        Gradio[Interface Gradio]
+        Gradio["Interface Gradio"]
     end
 
     %% Backend
     subgraph "Backend - FastAPI"
-        FastAPI_Router[Contrôleurs REST\n/ask, /rebuild, /health]
-        Chatbot_Service[Service RAG\n(LangChain)]
-        Data_Service[Service Fetch Data]
+        FastAPI_Router["Contrôleurs REST\n/ask, /rebuild, /health"]
+        Chatbot_Service["Service RAG\n(LangChain)"]
+        Data_Service["Service Fetch Data"]
     end
 
     %% Externe & BD
     subgraph "Modèles & Données"
-        FAISS[(FAISS Vector DB)]
-        Mistral[Mistral AI API\n(LLM)]
-        HF[Hugging Face API\n(Embeddings)]
-        OpenAgenda([API Open Agenda])
+        FAISS[("FAISS Vector DB")]
+        Mistral["Mistral AI API\n(LLM)"]
+        HF["Hugging Face API\n(Embeddings)"]
+        OpenAgenda(["API Open Agenda"])
     end
 
     %% Intéractions
