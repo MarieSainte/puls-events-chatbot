@@ -22,10 +22,10 @@ def chatbot_mistral(payload: AskSchema):
     elif get_backend_status() == "arret" :
         print("statut du backend : en arret")
         init()
-        return "Le serveur démarre !"
+        return {"answer": "Le serveur démarre !", "code": ""}
     else : 
         print("statut du backend : en cours de démarrage")
-        return "Le serveur redémarre !"
+        return {"answer": "Le serveur redémarre !", "code": ""}
 
 
 
