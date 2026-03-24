@@ -3,8 +3,7 @@ name: Ragas Evaluation CI
 on:
   push:
     branches:
-      - prod
-      - main
+      - dev
 
 jobs:
   rag-eval:
