@@ -7,29 +7,39 @@ FILTERS = "&limit=40&refine=location_countrycode%3A%22FR%22&refine=location_depa
 url = URL_BASE + SELECT + FILTERS
 
 def fetch_evenements_publics():
-
     try:
         print("Fetch events ...")
-        response = requests.get(url)
+        response = requests.get(url, timeout=15)
+        response.raise_for_status() 
         print("Events retrieve successfully !")
 
         data = response.json()
         df = pd.json_normalize(data['results'])
         return df
     
-    except Exception:
-        print(f"Une erreur est survenue durant la connexion a l'api Open Agenda")
+    except requests.exceptions.RequestException as e:
+        print(f"Une erreur réseau est survenue avec l'API Open Agenda : {e}")
+        return None
+    except Exception as e:
+        print(f"Une erreur inattendue est survenue lors de la récupération : {e}")
         return None
     
 def clean_data(df):
+    if df is None or df.empty:
+        return df
 
-    date_columns = ["First date - Beginning","Last date - Beginning", "First date - End", "Last date - End"]
-    
-    for column in date_columns :
-        df[column] = pd.to_datetime(
-            df[column], 
-            format='ISO8601', 
-            errors='coerce' 
-        )
-    df_unique = df.drop_duplicates(subset=['Description'])
-    return df_unique
+    if 'description' in df.columns:
+        df = df.dropna(subset=['description'])
+        df = df[df['description'].astype(str).str.strip() != '']
+        df = df.drop_duplicates(subset=['description'])
+        
+    date_columns = ["premier_jour_debut", "premier_jour_fin", "dernier_jour_debut", "dernier_jour_fin"]
+    for column in date_columns:
+        if column in df.columns:
+            df[column] = pd.to_datetime(
+                df[column], 
+                format='ISO8601', 
+                errors='coerce' 
+            )
+
+    return df
