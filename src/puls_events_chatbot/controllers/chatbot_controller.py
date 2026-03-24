@@ -5,7 +5,6 @@ from puls_events_chatbot.services.chatbot import chat_with_mistral, get_backend_
 
 router = APIRouter(prefix = "/chatbot")
 
-# history est ajouté pour pouvoir utiliser gradio !
 @router.post("/ask",response_model=None)
 def chatbot_mistral(payload: AskSchema):
     """
@@ -31,7 +30,7 @@ def chatbot_mistral(payload: AskSchema):
 
 
 @router.get("/rebuild",response_model=None)
-def rebuild(username: str = Body(..., embed=True)):
+def rebuild(username: str = Body(..., embed=True, examples=["admin"])):
     """
     Récupère les données via l'API OpenAgenda
     Relance l'initialisation de la base de données vectorielle

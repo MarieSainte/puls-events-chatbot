@@ -12,7 +12,6 @@ def chat(message,*_):
         response = requests.post(f"{API_BASE}/ask", json={"message": message})
         response.raise_for_status()
         data = response.json()
-        # Supposons que l'API retourne {'answer': "...", 'code': "..."}
         answer = data.get("answer", "Pas de réponse")
         code_snippet = data.get("code", "")
         if code_snippet:
