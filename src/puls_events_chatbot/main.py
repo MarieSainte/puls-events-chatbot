@@ -12,7 +12,6 @@ async def lifespan(app: FastAPI):
     print("Initialisation BDD vectorielle...")
     init()         
 
-    # Gradio en arrière-plan
     frontend = launch_frontend()
     thread = threading.Thread(
         target=frontend.launch,
@@ -20,7 +19,7 @@ async def lifespan(app: FastAPI):
         daemon=True,
     )
     thread.start()
-    yield            # libère le serveur
+    yield            
     print("Arrêt de l'application")
 
 app = FastAPI(
@@ -32,7 +31,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Ajout d'un endpoint
+
 app.include_router(chatbot_controller.router)
+
+@app.get("/health", tags=["System"])
+def health_check():
+    return {"status": "ok", "message": "The application is running."}
 
     
