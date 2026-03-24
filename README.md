@@ -34,8 +34,8 @@ flowchart TD
     end
 
     %% Intéractions
-    User <-->|Envoie une question / Reçoit réponse| Gradio
-    Gradio <-->|POST /chatbot/ask| FastAPI_Router
+    User <-->|Envoie une question et Reçoit réponse| Gradio
+    Gradio <-->|POST chatbot/ask| FastAPI_Router
     FastAPI_Router --> Chatbot_Service
     
     %% Ingestion
@@ -45,7 +45,7 @@ flowchart TD
     
     %% RAG Workflow
     Chatbot_Service -->|1. Recherche sémantique| FAISS
-    Chatbot_Service -->|2. Prompt augmenté (Question + Contexte)| Mistral
+    Chatbot_Service -->|2. Prompt augmenté issu de la Question et du Contexte| Mistral
     Mistral -->|3. Génération de la réponse naturelle| Chatbot_Service
 ```
 
