@@ -111,8 +111,8 @@ for metric in metric_names:
 print("\n--- VÉRIFICATION DES SEUILS ---")
 
 THRESHOLDS = {
-    "context_precision": 0.6,
-    "faithfulness": 0.5
+    "context_precision": 0.7,
+    "faithfulness": 0.7
 }
 failed = []
 
