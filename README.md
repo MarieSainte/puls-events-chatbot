@@ -163,7 +163,6 @@ Ces excellents scores s'expliquent par le fait que FAISS trouve systématiquemen
 Ce projet étant un **Proof of Concept**, voici les axes d'améliorations majeurs pour un passage en production à grande échelle :
 
 1. **Mise à jour en temps réel (ETL / CRON)** : Actuellement, le jeu de données OpenAgenda est téléchargé et vectorisé au lancement du serveur FastAPI. Une amélioration consisterait à externaliser cette tâche dans un batch récurrent (ex: Airflow/CRON) pour des mises à jour incrémentales.
-2. **Scalabilité de la Base Vectorielle** : Bien que `FAISS` in-memory soit extrêmement rapide pour ce POC, le remplacer par une solution gérée comme **Qdrant**, **Pinecone** ou **Weaviate** permettrait de soulager la RAM du conteneur et de partager l'index entre plusieurs instances.
-3. **Gestion de l'historique (Mémoire)** : Permettre au bot de garder le contexte de la discussion (*Conversational Retrieval Chain*) pour que l'utilisateur puisse rebondir sur un événement suggéré sans avoir à répéter son contexte.
-4. **Stratégies de Chunking avancées** : Affiner le découpage textuel ou utiliser une recherche hybride (Vectorielle + Mots-clés / BM25) pour être plus robuste face aux fautes d'orthographe classiques.
-5. **Mise en Cache (Redis)** : Sauvegarder les requêtes fréquentes pour renvoyer la réponse sans consommer de tokens sur l'API Mistral.
+2. **Gestion de l'historique (Mémoire)** : Permettre au bot de garder le contexte de la discussion (*Conversational Retrieval Chain*) pour que l'utilisateur puisse rebondir sur un événement suggéré sans avoir à répéter son contexte.
+3. **Stratégies de Chunking avancées** : Affiner le découpage textuel ou utiliser une recherche hybride (Vectorielle + Mots-clés / BM25) pour être plus robuste face aux fautes d'orthographe classiques.
+4. **Mise en Cache (Redis)** : Sauvegarder les requêtes fréquentes pour renvoyer la réponse sans consommer de tokens sur l'API Mistral.
