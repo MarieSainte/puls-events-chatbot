@@ -235,7 +235,7 @@ def test_chatbot_ask_invalid_payload():
     assert response.status_code == 422
 
 def test_rebuild_missing_params():
-    response = client.get("/chatbot/rebuild")
+    response = client.post("/chatbot/rebuild")
     assert response.status_code == 422
 
 def test_health_check():
@@ -299,7 +299,7 @@ def test_chatbot_ask_backend_en_cours(mock_status):
 @patch("puls_events_chatbot.controllers.chatbot_controller.init")
 def test_rebuild_admin(mock_init):
     response = client.request(
-        "GET",
+        "POST",
         "/chatbot/rebuild",
         json={"username": "admin"}
     )
@@ -311,7 +311,7 @@ def test_rebuild_admin(mock_init):
 @patch("builtins.print")
 def test_rebuild_unauthorized(mock_print):
     response = client.request(
-        "GET",
+        "POST",
         "/chatbot/rebuild",
         json={"username": "user"}
     )
@@ -323,5 +323,5 @@ def test_rebuild_unauthorized(mock_print):
     mock_print.assert_called_once_with("NON AUTORISE !")
 
 def test_rebuild_missing_body():
-    response = client.get("/chatbot/rebuild")
+    response = client.post("/chatbot/rebuild")
     assert response.status_code == 422
