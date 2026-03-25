@@ -39,7 +39,7 @@ jobs:
             --cov-branch \
             --cov-report=term-missing \
             --cov-report=xml \
-            --cov-fail-under=50
+            --cov-fail-under=70
 
       - name: Run Ragas Evaluation
         env:

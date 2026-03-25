@@ -30,55 +30,95 @@ def test_clean_data(mock_events_df):
     cleaned_df = clean_data(df_with_doubles)
     assert len(cleaned_df) == 1
 
+def test_clean_data_empty_dataframe():
+    from puls_events_chatbot.services.fetch_data import clean_data
+
+    empty_df = pd.DataFrame()
+    cleaned_df = clean_data(empty_df)
+
+    assert cleaned_df.empty
+
 @patch("puls_events_chatbot.services.fetch_data.requests.get")
-def test_fetch_evenements_publics(mock_get):
+def test_fetch_evenements_publics_success(mock_get):
     from puls_events_chatbot.services.fetch_data import fetch_evenements_publics
-    mock_get.return_value.status_code = 200
-    mock_get.return_value.json.return_value = {"results": [{"Titre": "Test"}]}
-    
+
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = {
+        "results": [
+            {
+                "Titre": "Test",
+                "description": "Description test"
+            }
+        ]
+    }
+    mock_get.return_value = mock_response
+
     df = fetch_evenements_publics()
+
     assert isinstance(df, pd.DataFrame)
     assert not df.empty
+    assert "Titre" in df.columns
 
 # --- TESTS DU CHATBOT ---
 
-@patch("puls_events_chatbot.services.chatbot.embedding_model")
-def test_vector_store_initialization(mock_embed, mock_events_df):
-    from puls_events_chatbot.services.chatbot import createdb, get_embeddings_by_chunks
-    import puls_events_chatbot.services.chatbot as chatbot
-    
-    # Mock des embeddings
-    chatbot.df = mock_events_df
-    mock_embed.return_value = [np.random.rand(384).tolist()]
-    
-    get_embeddings_by_chunks(mock_events_df["description"].tolist())
-    created_db = createdb()
-    
-    assert chatbot.faiss_store is not None
-    assert "embeddings" in chatbot.df.columns
+def test_get_embeddings_by_chunks(mock_events_df):
+    from puls_events_chatbot.services.chatbot import PulsEventsRAG
+
+    rag = PulsEventsRAG()
+    rag.df = mock_events_df.copy()
+    rag.embedding_class = MagicMock()
+    rag.embedding_class.embed_documents.return_value = [np.random.rand(384).tolist()]
+
+    rag._get_embeddings_by_chunks(rag.df["description"].tolist())
+
+    assert "embeddings" in rag.df.columns
+
+def test_createdb(mock_events_df):
+    from puls_events_chatbot.services.chatbot import PulsEventsRAG
+
+    rag = PulsEventsRAG()
+    rag.df = mock_events_df.copy()
+    rag.df["embeddings"] = [np.random.rand(384).tolist()]
+
+    rag._createdb()
+
+    assert rag.faiss_store is not None
+
+def test_metadata_to_str_without_store():
+    from puls_events_chatbot.services.chatbot import PulsEventsRAG
+
+    rag = PulsEventsRAG()
+    result = rag.metadata_to_str("concert")
+    assert result == "Aucun événement correspondant."
 
 # --- TESTS DES ENDPOINTS (API) ---
 
-def test_get_status():
-    response = client.get("/chatbot/ask") 
-    # Si le backend est à l'arrêt, il initie le démarrage
-    assert response.status_code in [200, 405]
+def test_chatbot_ask_invalid_payload():
+    response = client.post("/chatbot/ask", json={})
+    assert response.status_code == 422
 
-@patch("puls_events_chatbot.controllers.chatbot_controller.chat_with_mistral")
-def test_chatbot_ask_endpoint(mock_chat):
-    
-    mock_chat.return_value = "Voici un événement en Martinique"
-    
-    with patch("puls_events_chatbot.services.chatbot.get_backend_status", return_value="actif"):
-        response = client.post(
-            "/chatbot/ask",
-            json={"message": "Quels sont les événements ?"}
-        )
+def test_chatbot_ask_endpoint_starting_state():
+    response = client.post(
+        "/chatbot/ask",
+        json={"message": "Quels sont les événements ?"}
+    )
     assert response.status_code == 200
     assert "answer" in response.json()
-    assert response.json()["answer"] == "Voici un événement en Martinique"
 
-def test_rebuild_unauthorized():
+def test_rebuild_invalid_request():
     response = client.get("/chatbot/rebuild", params={"username": "user"})
-    assert response.status_code in [401, 403]
-    assert response.json()["detail"] == "Vous êtes pas autoriser à utiliser cette fonctionnalité."
+    assert response.status_code == 422
+
+def test_rebuild_missing_params():
+    response = client.get("/chatbot/rebuild")
+    assert response.status_code == 422
+
+def test_health_check():
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ok",
+        "message": "The application is running."
+    }
