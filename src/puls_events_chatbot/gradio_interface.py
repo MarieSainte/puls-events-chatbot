@@ -26,7 +26,7 @@ def rebuild_api(username):
     Ne renvoie rien.
     """
     try:
-        response = requests.get(f"{API_BASE}/rebuild", json={"username": username})
+        response = requests.post(f"{API_BASE}/rebuild", json={"username": username})
         response.raise_for_status()
     except Exception as e:
         print(f"Erreur lors du rebuild : {e}")

@@ -5,14 +5,56 @@ from puls_events_chatbot.services.chatbot import chat_with_mistral, get_backend_
 
 router = APIRouter(prefix = "/chatbot")
 
-@router.post("/ask",response_model=None)
+@router.post("/ask",
+    response_model=None,
+    tags=["Chatbot"],
+    summary="Interroger le chatbot RAG",
+    description="""
+        Envoi une requete augmentée au Chatbot
+        - **Requete**: Texte contenant la question de l'utilisateur.
+        si besoin : 
+        Récupère les données via l'API OpenAgenda ou
+        Relance l'initialisation de la base de données vectorielle
+    """,
+    responses={
+        200: {
+            "description": "Réponse du chatbot ou message d'état du système",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "reponse_normale": {
+                            "summary": "Réponse RAG",
+                            "value": {
+                                "answer": "Bonjour ! Oui, il y a un événement qui pourrait vous intéresser : un Jobdating des Aides à domicile aura lieu...",
+                                "code": ""
+                            }
+                        },
+                        "serveur_demarrage": {
+                            "summary": "Backend en cours d'initialisation",
+                            "value": {
+                                "answer": "Le serveur démarre !",
+                                "code": ""
+                            }
+                        },
+                        "serveur_restart": {
+                            "summary": "Backend en cours de redémarrage",
+                            "value": {
+                                "answer": "Le serveur redémarre !",
+                                "code": ""
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        422: {
+            "description": "Erreur de validation du payload"
+        }
+    }
+)
 def chatbot_mistral(payload: AskSchema):
     """
-    Envoi une requete augmentée au Chatbot
-    - **query**: Texte contenant la question de l'utilisateur.
-    si besoin : 
-    Récupère les données via l'API OpenAgenda
-    Relance l'initialisation de la base de données vectorielle
+    Endpoint principal du chatbot.
     """
     query = payload.message
     if get_backend_status() == "actif":
@@ -29,11 +71,18 @@ def chatbot_mistral(payload: AskSchema):
 
 
 
-@router.get("/rebuild",response_model=None)
-def rebuild(username: str = Body(..., embed=True, examples=["admin"])):
+@router.post("/rebuild",
+    response_model=None,
+    tags=["Chatbot"],
+    summary="Recharger la base de données vectorielle",
+    description="""
+        Récupère les données via l'API OpenAgenda,
+        Relance l'initialisation de la base de données vectorielle
     """
-    Récupère les données via l'API OpenAgenda
-    Relance l'initialisation de la base de données vectorielle
+    )
+def rebuild(username: str = Body(..., embed=True, example="admin", description="Nom d'utilisateur autorisé à relancer la base")):
+    """
+    Endpoint pour recharger la base de données vectorielle.
     """
     if username == "admin":
         init()

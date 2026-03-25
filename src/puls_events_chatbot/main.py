@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title = "Chatbot",
     description="API pour communiquer avec le chatbot de puls events",
-    version=1.0,
+    version="1.0",
     docs_url="/swagger",
     redoc_url="/redoc",
     lifespan=lifespan,

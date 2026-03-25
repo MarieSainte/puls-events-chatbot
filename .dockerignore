@@ -7,3 +7,4 @@ __pycache__/
 *.pyc
 *.pyo
 tests/
+src/puls_events_chatbot/data/
