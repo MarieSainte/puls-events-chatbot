@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, patch
 import pandas as pd
 import numpy as np
-from puls_events_chatbot import app  
+from puls_events_chatbot.main import app
 
 client = TestClient(app)
 
