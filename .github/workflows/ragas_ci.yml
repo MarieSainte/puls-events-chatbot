@@ -34,7 +34,7 @@ jobs:
           MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
           HUGGING_API_KEY: ${{ secrets.HUGGING_API_KEY }}
         run: |
-          pytest tests/api_test.py \
+          pytest tests\
             --cov=puls_events_chatbot \
             --cov-branch \
             --cov-report=term-missing \
@@ -46,4 +46,4 @@ jobs:
           MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
           HUGGING_API_KEY: ${{ secrets.HUGGING_API_KEY }}
         run: |
-          python tests/evaluate_rag.py
+          python evaluation/evaluate_rag.py

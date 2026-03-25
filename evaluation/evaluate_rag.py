@@ -118,7 +118,7 @@ failed = []
 
 for metric, threshold in THRESHOLDS.items():
     
-    score = result.get(metric, 0.0)
+    score = mean_scores.get(metric, 0.0)
     print(f"{metric}: {score:.4f} (seuil: {threshold})")
     
     if score < threshold:

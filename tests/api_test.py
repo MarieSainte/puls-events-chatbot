@@ -8,8 +8,6 @@ import gradio as gr
 
 client = TestClient(app)
 
-
-
 @pytest.fixture
 def mock_events_df():
     return pd.DataFrame({
@@ -115,18 +113,6 @@ def test_chatbot_ask_invalid_payload():
     response = client.post("/chatbot/ask", json={})
     assert response.status_code == 422
 
-def test_chatbot_ask_endpoint_starting_state():
-    response = client.post(
-        "/chatbot/ask",
-        json={"message": "Quels sont les événements ?"}
-    )
-    assert response.status_code == 200
-    assert "answer" in response.json()
-
-def test_rebuild_invalid_request():
-    response = client.get("/chatbot/rebuild", params={"username": "user"})
-    assert response.status_code == 422
-
 def test_rebuild_missing_params():
     response = client.get("/chatbot/rebuild")
     assert response.status_code == 422
@@ -140,71 +126,82 @@ def test_health_check():
         "message": "The application is running."
     }
 
-# --- GRADIO TESTS ---
+@patch("puls_events_chatbot.controllers.chatbot_controller.chat_with_mistral")
+@patch("puls_events_chatbot.controllers.chatbot_controller.get_backend_status")
+def test_chatbot_ask_backend_actif(mock_status, mock_chat):
+    mock_status.return_value = "actif"
+    mock_chat.return_value = "Voici un événement en Martinique"
 
-@patch("puls_events_chatbot.gradio_interface.requests.post")
-def test_gradio_chat_success_with_code(mock_post):
-    from puls_events_chatbot.gradio_interface import chat
+    response = client.post(
+        "/chatbot/ask",
+        json={"message": "Quels sont les événements ?"}
+    )
 
-    mock_response = MagicMock()
-    mock_response.raise_for_status.return_value = None
-    mock_response.json.return_value = {
-        "answer": "Voici la réponse",
-        "code": "print('hello')"
+    assert response.status_code == 200
+    assert response.json() == {
+        "answer": "Voici un événement en Martinique",
+        "code": ""
     }
-    mock_post.return_value = mock_response
 
-    result = chat("Montre-moi du code")
+@patch("puls_events_chatbot.controllers.chatbot_controller.init")
+@patch("puls_events_chatbot.controllers.chatbot_controller.get_backend_status")
+def test_chatbot_ask_backend_arret(mock_status, mock_init):
+    mock_status.return_value = "arret"
 
-    assert "Voici la réponse" in result
-    assert "```python" in result
-    assert "print('hello')" in result
+    response = client.post(
+        "/chatbot/ask",
+        json={"message": "Quels sont les événements ?"}
+    )
 
-@patch("puls_events_chatbot.gradio_interface.requests.post")
-def test_gradio_chat_success_with_code(mock_post):
-    from puls_events_chatbot.gradio_interface import chat
-
-    mock_response = MagicMock()
-    mock_response.raise_for_status.return_value = None
-    mock_response.json.return_value = {
-        "answer": "Voici la réponse",
-        "code": "print('hello')"
+    assert response.status_code == 200
+    assert response.json() == {
+        "answer": "Le serveur démarre !",
+        "code": ""
     }
-    mock_post.return_value = mock_response
+    mock_init.assert_called_once()
 
-    result = chat("Montre-moi du code")
+@patch("puls_events_chatbot.controllers.chatbot_controller.get_backend_status")
+def test_chatbot_ask_backend_en_cours(mock_status):
+    mock_status.return_value = "en cours"
 
-    assert "Voici la réponse" in result
-    assert "```python" in result
-    assert "print('hello')" in result
+    response = client.post(
+        "/chatbot/ask",
+        json={"message": "Quels sont les événements ?"}
+    )
 
-@patch("puls_events_chatbot.gradio_interface.requests.post")
-def test_gradio_chat_api_error(mock_post):
-    from puls_events_chatbot.gradio_interface import chat
+    assert response.status_code == 200
+    assert response.json() == {
+        "answer": "Le serveur redémarre !",
+        "code": ""
+    }
 
-    mock_post.side_effect = Exception("API down")
+@patch("puls_events_chatbot.controllers.chatbot_controller.init")
+def test_rebuild_admin(mock_init):
+    response = client.request(
+        "GET",
+        "/chatbot/rebuild",
+        json={"username": "admin"}
+    )
 
-    result = chat("Quels sont les événements ?")
+    assert response.status_code == 200
+    assert response.json() == {"detail": "Base rechargée"}
+    mock_init.assert_called_once()
 
-    assert "Erreur lors de l'appel à l'API" in result
-    assert "API down" in result
+@patch("builtins.print")
+def test_rebuild_unauthorized(mock_print):
+    response = client.request(
+        "GET",
+        "/chatbot/rebuild",
+        json={"username": "user"}
+    )
 
-@patch("puls_events_chatbot.gradio_interface.requests.get")
-def test_gradio_rebuild_api_success(mock_get):
-    from puls_events_chatbot.gradio_interface import rebuild_api
+    assert response.status_code == 200
+    assert response.json() == {
+        "detail": "Vous êtes pas autoriser à utiliser cette fonctionnalité."
+    }
+    mock_print.assert_called_once_with("NON AUTORISE !")
 
-    mock_response = MagicMock()
-    mock_response.raise_for_status.return_value = None
-    mock_get.return_value = mock_response
+def test_rebuild_missing_body():
+    response = client.get("/chatbot/rebuild")
+    assert response.status_code == 422
 
-    rebuild_api("admin")
-
-    mock_get.assert_called_once()
-
-@patch("puls_events_chatbot.gradio_interface.requests.get")
-def test_gradio_rebuild_api_error(mock_get):
-    from puls_events_chatbot.gradio_interface import rebuild_api
-
-    mock_get.side_effect = Exception("Rebuild failed")
-
-    rebuild_api("admin")
