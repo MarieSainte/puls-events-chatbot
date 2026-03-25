@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import numpy as np
 from puls_events_chatbot.main import app
+import gradio as gr
 
 client = TestClient(app)
 
