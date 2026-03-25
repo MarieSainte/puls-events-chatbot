@@ -22,6 +22,13 @@ router = APIRouter(prefix = "/chatbot")
             "content": {
                 "application/json": {
                     "examples": {
+                        "requete_vide": {
+                            "summary": "Requète vide",
+                            "value": {
+                                "answer": "Veuillez poser une question",
+                                "code": ""
+                            }
+                        },
                         "reponse_normale": {
                             "summary": "Réponse RAG",
                             "value": {
@@ -57,6 +64,8 @@ def chatbot_mistral(payload: AskSchema):
     Endpoint principal du chatbot.
     """
     query = payload.message
+    if query is None:
+        return {"answer": "Veuillez poser une question", "code": ""}
     if get_backend_status() == "actif":
         print("statut du backend : pret")
         answer  = chat_with_mistral(query)
