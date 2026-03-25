@@ -94,6 +94,8 @@ scores_df = result.to_pandas()
 metric_names = [
     "context_precision",
     "faithfulness",
+    "answer_relevancy",
+    "context_recall"
 ]
 
 mean_scores = {}
