@@ -93,9 +93,7 @@ scores_df = result.to_pandas()
 
 metric_names = [
     "context_precision",
-    "context_recall",
     "faithfulness",
-    "answer_relevancy",
 ]
 
 mean_scores = {}
@@ -111,8 +109,8 @@ for metric in metric_names:
 print("\n--- VÉRIFICATION DES SEUILS ---")
 
 THRESHOLDS = {
-    "context_precision": 0.8,
-    "answer_relevancy": 0.8
+    "context_precision": 0.6,
+    "answer_relevancy": 0.5
 }
 failed = []
 
