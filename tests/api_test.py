@@ -157,7 +157,10 @@ def test_init_success(mock_fetch, mock_clean, mock_events_df):
     mock_fetch.return_value = mock_events_df
     mock_clean.return_value = mock_events_df.copy()
 
-    rag._get_embeddings_by_chunks = MagicMock()
+    def fake_get_embeddings(data):
+        rag.df["embeddings"] = [np.random.rand(384).tolist() for _ in range(len(rag.df))]
+
+    rag._get_embeddings_by_chunks = MagicMock(side_effect=fake_get_embeddings)
     rag._createdb = MagicMock()
 
     rag.init()
