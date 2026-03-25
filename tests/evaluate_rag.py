@@ -31,8 +31,6 @@ evaluator_embeddings = HuggingFaceEndpointEmbeddings(
     huggingfacehub_api_token=os.getenv("HUGGING_API_KEY")
 )
 
-SEUIL_PRECISION = 0.8
-
 # Instanciation RAG
 rag = PulsEventsRAG()
 
@@ -93,12 +91,33 @@ print("\n--- RÉSULTATS DES MÉTRIQUES (RAGAS) ---")
 for metric_name, score in result.items():
     print(f"{metric_name}: {score:.4f}")
 
-score_precision = result.get('context_precision', 0)
+THRESHOLDS = {
+    "context_precision": 0.8,
+    "answer_relevancy": 0.8
+}
 
-# Verdict pour la CI/CD
-if score_precision < SEUIL_PRECISION:
-    print(f"\nÉCHEC CI/CD : precision du contexte ({score_precision:.4f})  <  SEUIL ({SEUIL_PRECISION})")
+failed = []
+
+print("\n--- VÉRIFICATION DES SEUILS ---")
+
+for metric, threshold in THRESHOLDS.items():
+    
+    score = result.get(metric)
+    if score is None:
+        score = 0
+    score = float(score)
+
+    print(f"{metric}: {score:.4f} (seuil: {threshold})")
+    
+    if score < threshold:
+        failed.append((metric, score, threshold))
+
+# Verdict CI/CD
+if failed:
+    print("\nÉCHEC CI/CD : métriques insuffisantes :")
+    for metric, score, threshold in failed:
+        print(f"- {metric}: {score:.4f} < {threshold}")
     sys.exit(1)
 else:
-    print(f"\nSUCCÈS CI/CD : precision du contexte ({score_precision:.4f})  >=  SEUIL ({SEUIL_PRECISION})")
+    print("\nSUCCÈS CI/CD : toutes les métriques sont au-dessus des seuils")
     sys.exit(0)
