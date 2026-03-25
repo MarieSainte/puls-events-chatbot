@@ -110,7 +110,7 @@ print("\n--- VÉRIFICATION DES SEUILS ---")
 
 THRESHOLDS = {
     "context_precision": 0.6,
-    "answer_relevancy": 0.5
+    "faithfulness": 0.5
 }
 failed = []
 
