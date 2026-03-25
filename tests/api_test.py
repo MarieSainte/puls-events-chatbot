@@ -21,7 +21,7 @@ def mock_events_df():
         "ville": ["FDF"]
     })
 
-# --- TESTS DES SERVICES ---
+# --- TESTS FETCH DATA ---
 
 def test_clean_data(mock_events_df):
     from puls_events_chatbot.services.fetch_data import clean_data
@@ -107,6 +107,124 @@ def test_chat_with_mistral_returns_fallback_on_error():
         "Désolé, je rencontre actuellement un problème technique avec mon service "
         "d'intelligence artificielle. Veuillez réessayer plus tard."
     )
+
+
+def test_metadata_to_str_with_results():
+    from puls_events_chatbot.services.chatbot import PulsEventsRAG
+    from langchain_core.documents import Document
+
+    rag = PulsEventsRAG()
+    rag.faiss_store = MagicMock()
+    rag.faiss_store.similarity_search.return_value = [
+        Document(
+            page_content="Concert de jazz",
+            metadata={
+                "Titre": "Jazz Night",
+                "description": "Concert de jazz à Paris",
+                "date": "2026-04-10",
+                "nom_localisation": "Salle X",
+                "adresse": "10 rue test",
+                "code_postale": "75001",
+                "ville": "Paris",
+                "URL": "http://example.com"
+            }
+        )
+    ]
+
+    result = rag.metadata_to_str("concert jazz")
+
+    assert "Événement: Jazz Night" in result
+    assert "Concert de jazz à Paris" in result
+    assert "Paris" in result
+
+def test_metadata_to_str_with_empty_results():
+    from puls_events_chatbot.services.chatbot import PulsEventsRAG
+
+    rag = PulsEventsRAG()
+    rag.faiss_store = MagicMock()
+    rag.faiss_store.similarity_search.return_value = []
+
+    result = rag.metadata_to_str("concert")
+
+    assert result == "Aucun événement correspondant."
+
+@patch("puls_events_chatbot.services.chatbot.clean_data")
+@patch("puls_events_chatbot.services.chatbot.fetch_evenements_publics")
+def test_init_success(mock_fetch, mock_clean, mock_events_df):
+    from puls_events_chatbot.services.chatbot import PulsEventsRAG
+
+    rag = PulsEventsRAG()
+    mock_fetch.return_value = mock_events_df
+    mock_clean.return_value = mock_events_df.copy()
+
+    rag._get_embeddings_by_chunks = MagicMock()
+    rag._createdb = MagicMock()
+
+    rag.init()
+
+    assert rag.backend_ready == "actif"
+    rag._get_embeddings_by_chunks.assert_called_once()
+    rag._createdb.assert_called_once()
+
+def test_get_backend_status():
+    from puls_events_chatbot.services.chatbot import PulsEventsRAG
+
+    rag = PulsEventsRAG()
+    assert rag.get_backend_status() == "arret"
+
+def test_chat_with_mistral_success():
+    from puls_events_chatbot.services.chatbot import PulsEventsRAG
+
+    rag = PulsEventsRAG()
+    rag.metadata_to_str = MagicMock(return_value="Contexte test")
+
+    mock_agent = MagicMock()
+    mock_agent.invoke.return_value = {
+        "messages": [
+            {"role": "user", "content": "question"},
+            MagicMock(content="Réponse générée")
+        ]
+    }
+
+    with patch("puls_events_chatbot.services.chatbot.create_agent", return_value=mock_agent):
+        result = rag.chat_with_mistral("Quels sont les événements ?")
+
+    assert result == "Réponse générée"
+
+@patch("puls_events_chatbot.services.chatbot.rag_system")
+def test_module_get_backend_status(mock_rag_system):
+    from puls_events_chatbot.services.chatbot import get_backend_status
+
+    mock_rag_system.get_backend_status.return_value = "actif"
+    result = get_backend_status()
+
+    assert result == "actif"
+
+@patch("puls_events_chatbot.services.chatbot.rag_system")
+def test_module_metadata_to_str(mock_rag_system):
+    from puls_events_chatbot.services.chatbot import metadata_to_str
+
+    mock_rag_system.metadata_to_str.return_value = "Contexte"
+    result = metadata_to_str("concert")
+
+    assert result == "Contexte"
+
+@patch("puls_events_chatbot.services.chatbot.rag_system")
+def test_module_chat_with_mistral(mock_rag_system):
+    from puls_events_chatbot.services.chatbot import chat_with_mistral
+
+    mock_rag_system.chat_with_mistral.return_value = "Réponse"
+    result = chat_with_mistral("concert")
+
+    assert result == "Réponse"
+
+@patch("puls_events_chatbot.services.chatbot.rag_system")
+def test_module_init(mock_rag_system):
+    from puls_events_chatbot.services.chatbot import init
+
+    init()
+    mock_rag_system.init.assert_called_once()
+
 # --- TESTS DES ENDPOINTS (API) ---
 
 def test_chatbot_ask_invalid_payload():
@@ -204,4 +322,3 @@ def test_rebuild_unauthorized(mock_print):
 def test_rebuild_missing_body():
     response = client.get("/chatbot/rebuild")
     assert response.status_code == 422
-
