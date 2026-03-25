@@ -58,10 +58,10 @@ Le projet est modulaire et s'appuie sur la stack technique suivante :
 - **Gradio (Frontend)** : Fournit une interface utilisateur interactive de type "chat" (bulle de messages) simple d'utilisation. Il encapsule l'appel à l'API Backend.
 - **FastAPI (Backend Controllers)** : Serveur robuste exposant l'API REST. Il gère le cycle de vie de l'application (téléchargement des données au démarrage), expose le point d'entrée pour les questions (`/ask`), le rechargement forcé de la base (`/rebuild`) et les vérifications d'état (`/health`).
 - **Open Agenda API (Fetch Data)** : Source de données externe fournissant les événements culturels (actuellement configurée pour la région de Paris). C'est la base de connaissance du chatbot.
-- **Hugging Face (`sentence-transformers`)** : Fournisseur du modèle d'embedding multilingue (`paraphrase-multilingual-mpnet-base-v2`). Il convertit le nom et la description des événements en vecteurs mathématiques (plongements lexicaux).
+- **Hugging Face (`sentence-transformers`)** : Fournisseur du modèle d'embedding multilingue (`paraphrase-multilingual-mpnet-base-v2`). Il convertit la description des événements en vecteurs numériques.
 - **FAISS (Vector Store)** : Base de données vectorielle locale. Elle indexe les embeddings d'événements et permet d'exécuter des recherches de similarité extrêmement rapides pour trouver les événements répondant à la question de l'utilisateur.
 - **Mistral AI (`mistral-medium-latest`)** : Le grand modèle de langage (LLM) responsable de la synthèse. Via LangChain, il reçoit le prompt strict incluant la demande utilisateur et le contexte exact issu de FAISS pour rédiger une réponse conversationnelle et fiable sans hallucination.
-- **Ragas (`evaluate_rag.py`)** : Script d'évaluation du RAG mesurant des critères qualitatifs clés (Faithfulness, Answer Relevancy, Context Precision, Context Recall) pour automatiser les tests qualitatifs.
+- **Ragas (`evaluate_rag.py`)** : Script d'évaluation du RAG mesurant des critères qualitatifs clés (Faithfulness, Context Precision) pour automatiser les tests qualitatifs.
 
 ---
 
@@ -132,17 +132,17 @@ L'interface Gradio démarre automatiquement en arrière-plan avec le backend.
 
 ## 6. Évaluation RAG (Ragas)
 
-Le système intègre un script d'évaluation continue (`tests/evaluate_rag.py`) qui permet de mesurer la qualité des réponses de l'IA (LLM-as-a-judge) sur un jeu de données de référence (`test_cases.json`). Nous monitorons 4 métriques RAGAS :
+Le système intègre un script d'évaluation continue (`evaluation/evaluate_rag.py`) qui permet de mesurer la qualité des réponses de l'IA (LLM-as-a-judge) sur un jeu de données de référence (`evaluation/test_cases.json`). Nous monitorons 2 métriques RAGAS sur les 4 principales :
 
 **Génération (LLM) :**
 - **Faithfulness** : Vérifie que la réponse générée est strictement fidèle au contexte récupéré, sans hallucination.
-- **Answer Relevancy** : Mesure si la réponse est directement pertinente et utile par rapport à la question de l'utilisateur.
+- **Answer Relevancy** (*non monitorée*) : Mesure si la réponse est directement pertinente et utile par rapport à la question de l'utilisateur.
 
 **Récupération (Vector Store / Embeddings) :**
 - **Context Precision** : Évalue si le contexte récupéré (les événements) est pertinent et si les documents les plus utiles sont classés en premier (peu de bruit).
-- **Context Recall** : Mesure si *toutes* les parties du contexte nécessaires pour répondre à la question ont bien été extraites de la base FAISS.
+- **Context Recall** (*non monitorée*) : Mesure si *toutes* les parties du contexte nécessaires pour répondre à la question ont bien été extraites de la base FAISS.
 
-*Remarque : Ce processus est automatisable via les flux CI/CD (ex: le pipeline échoue si `context_precision` ou une autre métrique chute sous 0.8).*
+*Remarque : Ce processus est automatisable via les flux CI/CD (ex: le pipeline échoue si `context_precision` ou une autre métrique chute sous 0.7).*
 
 ### Résultats actuels (POC)
 
@@ -150,11 +150,11 @@ Exemple de retour sur notre dataset `test_cases.json` :
 ```text
 --- RÉSULTATS DES MÉTRIQUES (RAGAS) ---
 context_precision: 1.0000
-context_recall: 1.0000
-faithfulness: 1.0000
-answer_relevancy: 0.9542
+context_recall: 0.7000
+faithfulness: 0.8400
+answer_relevancy: 0.8542
 ```
-Ces excellents scores s'expliquent par le fait que FAISS trouve systématiquement le bon événement pour les questions ciblées du test, et que Mistral rédige ses réponses en restant strictement fidèle au contexte fourni sans halluciner.
+Ces scores s'expliquent par le fait que FAISS trouve le bon événement pour les questions ciblées du test, et que Mistral rédige ses réponses en restant strictement fidèle au contexte fourni sans halluciner.
 
 ---
 

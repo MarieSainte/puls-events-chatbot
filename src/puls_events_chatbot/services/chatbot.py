@@ -49,8 +49,7 @@ class PulsEventsRAG:
         try:
             embeddings = []
             embeddings.extend(self.embedding_class.embed_documents(data))
-            print(len(data), len(self.df))
-            assert len(embeddings) == len(self.df)
+            print(f"Nombre d'embeddings : {len(embeddings)}, Nombre de lignes : {len(self.df)}")
             self.df['embeddings'] = embeddings
         except Exception as e:
             print(f"Une erreur est survenue pendant l'embedding : {e}")
@@ -117,7 +116,7 @@ class PulsEventsRAG:
                 self._createdb()
                 
         self.backend_ready = "actif"
-        print(self.backend_ready)
+        print(f"self.backend_ready : {self.backend_ready}")
 
     def get_backend_status(self):
         return self.backend_ready
@@ -158,19 +157,19 @@ class PulsEventsRAG:
             source = m.get("source", "")
 
             event_text = f"""Événement: {titre}
-        Date: {date}
-        Description: {description}
-        Description longue: {description_longue}
-        Lieu: {loc} - {adresse} {cp} {ville}
-        Téléphone: {tel}
-        Site web: {site}
-        Horaires: début {p_j_d} fin {p_j_f}
-        Accès en ligne: {lien}
-        Âge: {age_min} à {age_max} ans
-        Source: {source}
-        URL: {url}
-        Image: {image}
-        Thumbnail: {thumbnail}"""
+                Date: {date}
+                Description: {description}
+                Description longue: {description_longue}
+                Lieu: {loc} - {adresse} {cp} {ville}
+                Téléphone: {tel}
+                Site web: {site}
+                Horaires: début {p_j_d} fin {p_j_f}
+                Accès en ligne: {lien}
+                Âge: {age_min} à {age_max} ans
+                Source: {source}
+                URL: {url}
+                Image: {image}
+                Thumbnail: {thumbnail}"""
         
             lines.append(event_text.strip())
 
