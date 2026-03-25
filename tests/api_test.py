@@ -30,7 +30,7 @@ def test_clean_data(mock_events_df):
     cleaned_df = clean_data(df_with_doubles)
     assert len(cleaned_df) == 1
 
-@patch("puls_events_chatbot.services.chatbot.requests.get")
+@patch("puls_events_chatbot.services.fetch_data.requests.get")
 def test_fetch_evenements_publics(mock_get):
     from puls_events_chatbot.services.fetch_data import fetch_evenements_publics
     mock_get.return_value.status_code = 200
@@ -42,7 +42,7 @@ def test_fetch_evenements_publics(mock_get):
 
 # --- TESTS DU CHATBOT ---
 
-@patch("puls_events_chatbot.services.chatbot.embedding_class.embed_documents")
+@patch("puls_events_chatbot.services.chatbot.embedding_model")
 def test_vector_store_initialization(mock_embed, mock_events_df):
     from puls_events_chatbot.services.chatbot import createdb, get_embeddings_by_chunks
     import puls_events_chatbot.services.chatbot as chatbot
@@ -64,7 +64,7 @@ def test_get_status():
     # Si le backend est à l'arrêt, il initie le démarrage
     assert response.status_code in [200, 405]
 
-@patch("puls_events_chatbot.services.chatbot.chat_with_mistral")
+@patch("puls_events_chatbot.controllers.chatbot_controller.chat_with_mistral")
 def test_chatbot_ask_endpoint(mock_chat):
     
     mock_chat.return_value = "Voici un événement en Martinique"
@@ -74,11 +74,11 @@ def test_chatbot_ask_endpoint(mock_chat):
             "/chatbot/ask",
             json={"message": "Quels sont les événements ?"}
         )
-        
     assert response.status_code == 200
     assert "answer" in response.json()
     assert response.json()["answer"] == "Voici un événement en Martinique"
 
 def test_rebuild_unauthorized():
-    response = client.get("/chatbot/rebuild", json={"username": "user"})
+    response = client.get("/chatbot/rebuild", params={"username": "user"})
+    assert response.status_code in [401, 403]
     assert response.json()["detail"] == "Vous êtes pas autoriser à utiliser cette fonctionnalité."
