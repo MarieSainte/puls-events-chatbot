@@ -92,6 +92,22 @@ def test_metadata_to_str_without_store():
     result = rag.metadata_to_str("concert")
     assert result == "Aucun événement correspondant."
 
+
+def test_chat_with_mistral_returns_fallback_on_error():
+    from puls_events_chatbot.services.chatbot import PulsEventsRAG
+
+    rag = PulsEventsRAG()
+    rag.model_class = MagicMock()
+
+    with patch("puls_events_chatbot.services.chatbot.create_agent") as mock_create_agent:
+        mock_create_agent.side_effect = Exception("Erreur Mistral")
+
+        result = rag.chat_with_mistral("Quels sont les événements ?")
+
+    assert result == (
+        "Désolé, je rencontre actuellement un problème technique avec mon service "
+        "d'intelligence artificielle. Veuillez réessayer plus tard."
+    )
 # --- TESTS DES ENDPOINTS (API) ---
 
 def test_chatbot_ask_invalid_payload():

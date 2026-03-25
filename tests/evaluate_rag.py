@@ -88,25 +88,37 @@ result = evaluate(
 )
 
 print("\n--- RÉSULTATS DES MÉTRIQUES (RAGAS) ---")
-for metric_name, score in result.items():
-    print(f"{metric_name}: {score:.4f}")
+
+scores_df = result.to_pandas()
+
+metric_names = [
+    "context_precision",
+    "context_recall",
+    "faithfulness",
+    "answer_relevancy",
+]
+
+mean_scores = {}
+for metric in metric_names:
+    if metric in scores_df.columns:
+        mean_scores[metric] = float(scores_df[metric].mean())
+        print(f"{metric}: {mean_scores[metric]:.4f}")
+    else:
+        mean_scores[metric] = 0.0
+        print(f"{metric}: non calculé")
+
+
+print("\n--- VÉRIFICATION DES SEUILS ---")
 
 THRESHOLDS = {
     "context_precision": 0.8,
     "answer_relevancy": 0.8
 }
-
 failed = []
-
-print("\n--- VÉRIFICATION DES SEUILS ---")
 
 for metric, threshold in THRESHOLDS.items():
     
-    score = result.get(metric)
-    if score is None:
-        score = 0
-    score = float(score)
-
+    score = result.get(metric, 0.0)
     print(f"{metric}: {score:.4f} (seuil: {threshold})")
     
     if score < threshold:
